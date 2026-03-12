@@ -271,10 +271,15 @@ class DataManager:
             if VERBOSE:
                 logger.info(f"更新 {symbol} 缓存: {update_start} ~ {update_end}")
             
-            # 获取增量数据
-            new_df = self._fetch_from_akshare(symbol, update_start, update_end)
-            
-            if new_df.empty:
+            # 获取增量数据（今日盘中/未开盘时可能返回空，静默跳过）
+            try:
+                new_df = self._fetch_from_akshare(symbol, update_start, update_end)
+            except Exception:
+                if VERBOSE:
+                    logger.info(f"{symbol} 增量数据暂不可用（可能今日尚未收盘），使用现有缓存")
+                return
+
+            if new_df is None or new_df.empty:
                 if VERBOSE:
                     logger.info(f"{symbol} 无新增数据")
                 return
